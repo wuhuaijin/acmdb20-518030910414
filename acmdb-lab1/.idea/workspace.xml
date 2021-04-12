@@ -1,22 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="12407231-3747-460d-a5f9-2a5395731e3e" name="Default Changelist" comment="" />
+    <list default="true" id="12407231-3747-460d-a5f9-2a5395731e3e" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/acmdb-lab0/Lab1-Report.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
   <component name="ProjectId" id="1qWH0PIXAV6kHj1szS1p1V164aH" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
     <property name="go.import.settings.migrated" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -125,6 +135,7 @@
       <updated>1617188201794</updated>
       <workItem from="1617188205120" duration="772000" />
       <workItem from="1617189009802" duration="23624000" />
+      <workItem from="1618208007318" duration="846000" />
     </task>
     <servers />
   </component>
@@ -137,6 +148,10 @@
     </state>
     <state x="100" y="100" width="1480" height="850" key="#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1617348973271" />
     <state x="100" y="100" width="1480" height="850" key="#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog/55.23.1625.1027@55.23.1625.1027" timestamp="1617349077671" />
+    <state x="548" y="335" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1618208190309">
+      <screen x="0" y="0" width="1680" height="1050" />
+    </state>
+    <state x="548" y="335" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1680.1050@0.0.1680.1050" timestamp="1618208190309" />
     <state x="676" y="245" key="#com.intellij.ide.util.MemberChooser" timestamp="1617352160173">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
