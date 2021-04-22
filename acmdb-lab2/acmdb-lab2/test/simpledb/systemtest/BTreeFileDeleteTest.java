@@ -204,30 +204,34 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 				tid, rootEntry.getRightChild(), Permissions.READ_ONLY);
 
 		// delete from the right child to test redistribution from the left
+		System.out.println("begin");
 		Iterator<BTreeEntry> it = rightChild.iterator();
 		int count = 0;
 		// bring the right internal page to minimum occupancy
 		while(it.hasNext() && count < 49 * 502 + 1) {
-			BTreeLeafPage leaf = (BTreeLeafPage) Database.getBufferPool().getPage(tid, 
+			System.out.println(count);
+			BTreeLeafPage leaf = (BTreeLeafPage) Database.getBufferPool().getPage(tid,
 					it.next().getLeftChild(), Permissions.READ_ONLY);
 			Tuple t = leaf.iterator().next();
 			Database.getBufferPool().deleteTuple(tid, t);
 			it = rightChild.iterator();
 			count++;
 		}
-
-		// deleting a page of tuples should bring the internal page below minimum 
+		System.out.println("1");
+		// deleting a page of tuples should bring the internal page below minimum
 		// occupancy and cause the entries to be redistributed
 		assertEquals(252, rightChild.getNumEmptySlots());
 		count = 0;
 		while(it.hasNext() && count < 502) {
-			BTreeLeafPage leaf = (BTreeLeafPage) Database.getBufferPool().getPage(tid, 
+			System.out.println("-");
+			BTreeLeafPage leaf = (BTreeLeafPage) Database.getBufferPool().getPage(tid,
 					it.next().getLeftChild(), Permissions.READ_ONLY);
 			Tuple t = leaf.iterator().next();
 			Database.getBufferPool().deleteTuple(tid, t);
 			it = rightChild.iterator();
 			count++;
 		}
+		System.out.println("2");
 		assertTrue(leftChild.getNumEmptySlots() > 203);
 		assertTrue(rightChild.getNumEmptySlots() <= 252);
 		BTreeChecker.checkRep(bf, tid, new HashMap<PageId, Page>(), true);
@@ -238,6 +242,7 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 		while(it.hasNext()) {
 			lastLeftEntry = it.next();
 		}
+		System.out.println("3");
 		rootEntry = root.iterator().next();
 		BTreeEntry firstRightEntry = rightChild.iterator().next();
 		assertTrue(lastLeftEntry.getKey().compare(Op.LESS_THAN_OR_EQ, rootEntry.getKey()));
@@ -280,20 +285,23 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 		Database.getBufferPool().deleteTuple(tid, it.next());
 		it.rewind();
 		while(count < 62) {
+			System.out.println(count);
 			assertEquals(count, leftChild.getNumEmptySlots());
 			for(int i = 0; i < 124; ++i) {
+				System.out.println(i);
 				Database.getBufferPool().deleteTuple(tid, it.next());
 				it.rewind();
 			}
 			count++;
 		}
-
+		System.out.println("+++++++");
 		BTreeChecker.checkRep(bigFile, tid, new HashMap<PageId, Page>(), true);
 
 		// deleting a page of tuples should bring the internal page below minimum 
 		// occupancy and cause the entries to be redistributed
 		assertEquals(62, leftChild.getNumEmptySlots());
 		for(int i = 0; i < 124; ++i) {
+			System.out.println(i);
 			Database.getBufferPool().deleteTuple(tid, it.next());
 			it.rewind();
 		}
@@ -306,6 +314,7 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 		// deleting another page of tuples should bring the page below minimum occupancy 
 		// again but this time cause it to merge with its right sibling 
 		for(int i = 0; i < 124; ++i) {
+			System.out.println(i);
 			Database.getBufferPool().deleteTuple(tid, it.next());
 			it.rewind();
 		}
@@ -324,8 +333,10 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 		// gets below minimum occupancy and causes the entries to be redistributed
 		count = 0;
 		while(count < 62) {
+			System.out.println(count);
 			assertEquals(count, leftChild.getNumEmptySlots());
 			for(int i = 0; i < 124; ++i) {
+				System.out.println(i);
 				Database.getBufferPool().deleteTuple(tid, it.next());
 				it.rewind();
 			}
@@ -335,6 +346,7 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 		// deleting another page of tuples should bring the page below minimum occupancy 
 		// and cause it to merge with the right sibling to replace the root
 		for(int i = 0; i < 124; ++i) {
+			System.out.println(i);
 			Database.getBufferPool().deleteTuple(tid, it.next());
 			it.rewind();
 		}
