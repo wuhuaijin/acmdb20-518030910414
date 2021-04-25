@@ -3,6 +3,8 @@ package simpledb;
 /** Unique identifier for HeapPage objects. */
 public class HeapPageId implements PageId {
 
+    private int tableId;
+    private int pageNumber;
     /**
      * Constructor. Create a page id structure for a specific page of a
      * specific table.
@@ -10,23 +12,16 @@ public class HeapPageId implements PageId {
      * @param tableId The table that is being referenced
      * @param pgNo The page number in that table.
      */
-    private Catalog.Table _table;
-    private int _tableid;
-    private int _pgNo;
-
-
     public HeapPageId(int tableId, int pgNo) {
-        _tableid = tableId;
-        _table = Database.getCatalog().getTablefromId(tableId);
-        _pgNo = pgNo;
         // some code goes here
+        this.tableId = tableId;
+        this.pageNumber = pgNo;
     }
 
     /** @return the table associated with this PageId */
     public int getTableId() {
-
         // some code goes here
-        return _tableid;
+        return tableId;
     }
 
     /**
@@ -35,7 +30,7 @@ public class HeapPageId implements PageId {
      */
     public int pageNumber() {
         // some code goes here
-        return _pgNo;
+        return pageNumber;
     }
 
     /**
@@ -46,8 +41,7 @@ public class HeapPageId implements PageId {
      */
     public int hashCode() {
         // some code goes here
-//        throw new UnsupportedOperationException("implement this");
-        return _tableid * 2333 + _pgNo;
+        return (tableId << 6) + pageNumber;
     }
 
     /**
@@ -58,10 +52,12 @@ public class HeapPageId implements PageId {
      *   ids are the same)
      */
     public boolean equals(Object o) {
-        if (!(o instanceof PageId)) return false;
-        if (((PageId) o).getTableId() != this.getTableId() || ((PageId) o).pageNumber() != this.pageNumber()) return false;
         // some code goes here
-        return true;
+        if (o == this) return true;
+        if (o instanceof HeapPageId)
+            if (tableId == ((HeapPageId) o).tableId && pageNumber == ((HeapPageId) o).pageNumber)
+                return true;
+        return false;
     }
 
     /**

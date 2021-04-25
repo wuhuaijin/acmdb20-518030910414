@@ -1,8 +1,5 @@
 package simpledb;
 
-import com.sun.corba.se.impl.naming.namingutil.INSURLBase;
-import sun.tools.jconsole.Tab;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -25,27 +22,16 @@ public class Catalog {
      * Constructor.
      * Creates a new, empty catalog.
      */
-
-    public class Table {
-
-        public DbFile _file;
-        public String _name;
-        public String _pkeyField;
-
-        public Table(DbFile file, String name, String pkeyField) {
-            _file = file;
-            _name = name;
-            _pkeyField = pkeyField;
-        }
-    }
-
-    private HashMap<Integer, Table> _id_table_map;
-    private HashMap<String, Integer> _name_id_map;
-
+    private HashMap<Integer, DbFile> tableid2DbFile;
+    private HashMap<String, Integer> name2tableid;
+    private HashMap<Integer, String> tableid2name;
+    private HashMap<Integer, String> tableid2PrimaryKey;
     public Catalog() {
-        _id_table_map = new HashMap<>();
-        _name_id_map = new HashMap<>();
         // some code goes here
+        tableid2DbFile = new HashMap<Integer, DbFile>();
+        name2tableid = new HashMap<String, Integer>();
+        tableid2name = new HashMap<Integer,String>();
+        tableid2PrimaryKey = new HashMap<Integer,String>();
     }
 
     /**
@@ -58,22 +44,15 @@ public class Catalog {
      * @param pkeyField the name of the primary key field
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        if (_name_id_map.containsKey(name)) {
-            _id_table_map.remove(_name_id_map.get(name));
-            _name_id_map.replace(name, file.getId());
-        }
-        else _name_id_map.put(name, file.getId());
-
-        _id_table_map.put(file.getId(), new Table(file, name, pkeyField));
         // some code goes here
+        tableid2DbFile.put(file.getId(),file);
+        name2tableid.put(name, file.getId());
+        tableid2name.put(file.getId(), name);
+        tableid2PrimaryKey.put(file.getId(),pkeyField);
     }
 
     public void addTable(DbFile file, String name) {
         addTable(file, name, "");
-    }
-
-    public Table getTablefromId(int tableid) {
-        return _id_table_map.get(tableid);
     }
 
     /**
@@ -92,11 +71,10 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-
-        if (!(_name_id_map.containsKey(name))) throw new NoSuchElementException();
-
         // some code goes here
-        return _name_id_map.get(name);
+        if (name == null || name2tableid.get(name) == null)
+            throw new NoSuchElementException();
+        return name2tableid.get(name);
     }
 
     /**
@@ -106,10 +84,8 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        if (!(_id_table_map.containsKey(tableid))) throw new NoSuchElementException();
-
         // some code goes here
-        return _id_table_map.get(tableid)._file.getTupleDesc();
+        return tableid2DbFile.get(tableid).getTupleDesc();
     }
 
     /**
@@ -119,36 +95,32 @@ public class Catalog {
      *     function passed to addTable
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
-        if (!(_id_table_map.containsKey(tableid))) throw new NoSuchElementException();
         // some code goes here
-        return _id_table_map.get(tableid)._file;
+        return tableid2DbFile.get(tableid);
     }
 
     public String getPrimaryKey(int tableid) {
-        if (!(_id_table_map.containsKey(tableid))) throw new NoSuchElementException();
         // some code goes here
-        return _id_table_map.get(tableid)._pkeyField;
-        // some code goes here
+        return tableid2PrimaryKey.get(tableid);
     }
 
     public Iterator<Integer> tableIdIterator() {
-
         // some code goes here
-        return _id_table_map.keySet().iterator();
+        return tableid2DbFile.keySet().iterator();
     }
 
     public String getTableName(int id) {
-        if (!(_id_table_map.containsKey(id))) throw new NoSuchElementException();
         // some code goes here
-        return _id_table_map.get(id)._name;
-        // some code goes here
+        return tableid2name.get(id);
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
-        _id_table_map.clear();
-        _name_id_map.clear();
         // some code goes here
+        tableid2DbFile.clear();
+        tableid2PrimaryKey.clear();
+        tableid2name.clear();
+        name2tableid.clear();
     }
     
     /**
