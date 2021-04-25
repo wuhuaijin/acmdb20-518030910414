@@ -1,0 +1,20 @@
+Lab2-Report
+吴怀瑾 518030910414
+
+1.design decisions
+
+    BufferPool: change linkedlist to hashmap, in order to easily maintain a LRU map. Add a LRUmap to
+                realize evict policy.
+
+2.API
+
+    no changes
+
+3.Incomplete elements
+
+    in B+tree implementation, we should delete tuple/entry first before add to another page. At first, I don't
+    use any evict policy and the systemtest cost much time, so I add LRU evit policy to speed up the bufferpool.
+
+4.Others
+
+    spent 10 hours to do this course work.
