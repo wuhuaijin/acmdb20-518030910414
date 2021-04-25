@@ -1,0 +1,19 @@
+Lab1-Report
+吴怀瑾 518030910414
+
+1.design decisions
+
+    BufferPool: A LinkedList
+    Catalog: An id_to_table hashmap and an name_to_id hashmap
+
+2.API
+
+    no changes
+
+3.Incomplete elements
+
+    the page_eviction, will be completed in lab2
+
+4.Others
+
+    spent 8 hours to do this course work.
