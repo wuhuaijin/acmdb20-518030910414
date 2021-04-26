@@ -1,8 +1,5 @@
 package simpledb;
 
-import com.sun.corba.se.impl.naming.namingutil.INSURLBase;
-import sun.tools.jconsole.Tab;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -31,7 +28,7 @@ public class Catalog {
         public DbFile _file;
         public String _name;
         public String _pkeyField;
-
+    
         public Table(DbFile file, String name, String pkeyField) {
             _file = file;
             _name = name;

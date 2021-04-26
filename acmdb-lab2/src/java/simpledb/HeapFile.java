@@ -1,7 +1,5 @@
 package simpledb;
 
-import sun.awt.shell.ShellFolder;
-
 import java.io.*;
 import java.util.*;
 
@@ -123,25 +121,25 @@ public class HeapFile implements DbFile {
         private TransactionId _tid;
         private int _currentPid;
         private Iterator<Tuple> _tupleIterator;
-
+    
         public HeapFileIterator(TransactionId tid) {
             _tid = tid;
         }
-
+    
         @Override
         public void open() throws DbException, TransactionAbortedException {
             _currentPid = 0;
             PageId pageId = new HeapPageId(getId(), _currentPid);
             _tupleIterator = ((HeapPage) Database.getBufferPool().getPage(_tid, pageId, Permissions.READ_ONLY)).iterator();
         }
-
+    
         @Override
         public boolean hasNext() throws DbException, TransactionAbortedException {
             if (_tupleIterator == null) return false;
             if (_tupleIterator.hasNext()) return true;
             return _currentPid < numPages() - 1;
         }
-
+    
         @Override
         public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
             if (!hasNext()) throw new NoSuchElementException();
@@ -150,14 +148,14 @@ public class HeapFile implements DbFile {
             PageId pageId = new HeapPageId(getId(), _currentPid);
             _tupleIterator = ((HeapPage) Database.getBufferPool().getPage(_tid, pageId, Permissions.READ_ONLY)).iterator();
             return _tupleIterator.next();
-
+    
         }
-
+    
         @Override
         public void rewind() throws DbException, TransactionAbortedException {
             open();
         }
-
+    
         @Override
         public void close() {
             _currentPid = 0;

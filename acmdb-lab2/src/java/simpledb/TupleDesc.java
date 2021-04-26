@@ -1,7 +1,5 @@
 package simpledb;
 
-import sun.util.resources.cldr.naq.CalendarData_naq_NA;
-
 import java.io.Serializable;
 import java.util.*;
 
@@ -21,7 +19,7 @@ public class TupleDesc implements Serializable {
          * The type of the field
          * */
         public final Type fieldType;
-        
+       
         /**
          * The name of the field
          * */
