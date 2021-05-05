@@ -1,0 +1,18 @@
+Lab3-Report
+吴怀瑾 518030910414
+
+1.design decisions
+
+    Use left and right to record the elements in join operation.
+
+2.API
+
+    no changes
+
+3.Incomplete elements
+
+    nothing.
+
+4.Others
+
+    spent 10 hours to do this course work. Join and HashEquiJoin confused me a lot.
