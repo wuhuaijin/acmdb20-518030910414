@@ -16,6 +16,64 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @Threadsafe, all fields are final
  */
+
+
+class PageLock {
+    public PageId _pageId;
+    private Set<TransactionId> _shared_locks;
+    private TransactionId _ex_lock;
+
+    PageLock(PageId pid) {
+        _pageId = pid;
+        _shared_locks = Collections.synchronizedSet(new HashSet<>());
+        _ex_lock = null;
+    }
+
+    boolean acquireLock(TransactionId tid, Permissions p) {
+        if (p.equals(Permissions.READ_ONLY)) {
+            if (_ex_lock == null) {
+                _shared_locks.add(tid);
+                return true;
+            } else {
+                return _ex_lock.equals(tid);
+            }
+        } else if (p.equals(Permissions.READ_WRITE)) {
+            if (_ex_lock != null) return _ex_lock.equals(tid);
+            if (_shared_locks.isEmpty() || (_shared_locks.size() == 1 && _shared_locks.contains(tid))) {
+                _ex_lock = tid;
+                _shared_locks.clear();
+
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    void releaseLock(TransactionId tid) {
+        if (tid.equals(_ex_lock)) _ex_lock = null;
+        else _shared_locks.remove(tid);
+    }
+
+
+    boolean holdsLock(TransactionId tid) {
+        return _ex_lock.equals(tid) || _shared_locks.contains(tid);
+    }
+
+    boolean hasEx() {
+        return _ex_lock != null;
+    }
+
+    Set<TransactionId> getHolders() {
+        Set<TransactionId> set = new HashSet<>();
+        if (hasEx()) set.add(_ex_lock);
+        set.addAll(_shared_locks);
+        return set;
+    }
+
+}
+
+
 public class BufferPool {
     /** Bytes per page, including header. */
     private static final int PAGE_SIZE = 4096;
@@ -33,6 +91,45 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
 
+
+    private ConcurrentHashMap<PageId, PageLock> pidToLock;
+    private ConcurrentHashMap<TransactionId, Set<PageId>> tidToPid;
+    private DependencyGraph dependencyGraph;
+
+    private class DependencyGraph {
+        private ConcurrentHashMap<TransactionId, Set<TransactionId>> graph = new ConcurrentHashMap<>();
+        synchronized void updateGraph(TransactionId tid, PageId pid) {
+            graph.putIfAbsent(tid, new HashSet<>());
+            Set<TransactionId> set = graph.get(tid);
+            set.clear();
+            if (pid == null) return;
+            synchronized (pidToLock.get(pid)) {
+                set.addAll(pidToLock.get(pid).getHolders());
+            }
+        }
+
+        synchronized void checkDeadlock(TransactionId tid) throws TransactionAbortedException {
+            dfs(tid, new HashSet<>());
+        }
+
+
+        void dfs(TransactionId root, HashSet<TransactionId> visit) throws TransactionAbortedException {
+            if (!graph.containsKey(root)) return;
+            for (TransactionId i : graph.get(root)) {
+                if (visit.contains(i)) {
+                    throw new TransactionAbortedException();
+                }
+                visit.add(i);
+                dfs(i, visit);
+                visit.remove(i);
+            }
+        }
+
+    }
+
+
+//    private final LockManager lockManager;
+
     private LinkedHashMap<PageId, Page> _page_cache;
     private LinkedHashMap<PageId, Integer> _LRU_cache;
 //    private ConcurrentHashMap<PageId, Page> _page_cache;
@@ -43,6 +140,10 @@ public class BufferPool {
         _page_cache = new LinkedHashMap<>();
         _LRU_cache = new LinkedHashMap<>();
         _capacity = numPages;
+        tidToPid = new ConcurrentHashMap<>();
+        pidToLock = new ConcurrentHashMap<>();
+        dependencyGraph = new DependencyGraph();
+//        lockManager = new LockManager();
         // some code goes here
     }
 
@@ -100,8 +201,32 @@ public class BufferPool {
 
     }
 
+    private void acquireLock(PageId pid, TransactionId tid, Permissions p) throws TransactionAbortedException {
+        pidToLock.putIfAbsent(pid, new PageLock(pid));
+        boolean ifGetLock;
+        synchronized (pidToLock.get(pid)) {
+            ifGetLock = pidToLock.get(pid).acquireLock(tid, p);
+        }
+        while (!ifGetLock) {
+            dependencyGraph.updateGraph(tid, pid);
+            dependencyGraph.checkDeadlock(tid);
+            synchronized (pidToLock.get(pid)) {
+                ifGetLock = pidToLock.get(pid).acquireLock(tid, p);
+            }
+        }
+        dependencyGraph.updateGraph(tid, null);
+        tidToPid.putIfAbsent(tid, new HashSet<>());
+        tidToPid.get(tid).add(pid);
+
+    }
+
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
+
+//        if (pid == null) throw
+
+        acquireLock(pid, tid, perm);
+//        lockManager.acquireLock(tid, pid, perm);
 
         if (_page_cache.containsKey(pid)) return _page_cache.get(pid);
         if (_page_cache.size() >= _capacity) {
@@ -110,7 +235,8 @@ public class BufferPool {
         }
         Page _page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
         _page_cache.put(pid, _page);
-        LRU_update(pid);
+        _page.setBeforeImage();
+//        LRU_update(pid);
 
         return _page;
 
@@ -126,6 +252,10 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public  void releasePage(TransactionId tid, PageId pid) {
+        synchronized (pidToLock.get(pid)){
+            pidToLock.get(pid).releaseLock(tid);
+        }
+        tidToPid.get(tid).remove(pid);
         // some code goes here
         // not necessary for lab1|lab2
     }
@@ -136,6 +266,7 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      */
     public void transactionComplete(TransactionId tid) throws IOException {
+        transactionComplete(tid, true);
         // some code goes here
         // not necessary for lab1|lab2
     }
@@ -144,7 +275,9 @@ public class BufferPool {
     public boolean holdsLock(TransactionId tid, PageId p) {
         // some code goes here
         // not necessary for lab1|lab2
-        return false;
+        synchronized (pidToLock.get(p)) {
+            return pidToLock.get(p).holdsLock(tid);
+        }
     }
 
     /**
@@ -156,6 +289,26 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid, boolean commit)
         throws IOException {
+        Set<PageId> LockPages = tidToPid.get(tid);
+        tidToPid.remove(tid);
+        if (LockPages == null) return;
+        for (PageId pid: LockPages){
+            Page page = _page_cache.get(pid);
+            if (page != null && pidToLock.get(pid).hasEx()){
+                if (commit) {
+                    if (page.isDirty() != null) {
+                        flushPage(pid);
+                        page.setBeforeImage();
+                    }
+                }
+                else {
+                    _page_cache.put(pid, page.getBeforeImage());
+                }
+            }
+            synchronized (pidToLock.get(pid)){
+                pidToLock.get(pid).releaseLock(tid);
+            }
+        }
         // some code goes here
         // not necessary for lab1|lab2
     }
@@ -185,7 +338,7 @@ public class BufferPool {
             if (!_page_cache.containsKey(pid) && _page_cache.size() >= _capacity) evictPage();
             i.markDirty(true, tid);
             _page_cache.put(pid, i);
-            LRU_update(pid);
+//            LRU_update(pid);
         }
 
         // some code goes here
@@ -216,7 +369,7 @@ public class BufferPool {
             if (!_page_cache.containsKey(pid) && _page_cache.size() >= _capacity) evictPage();
             i.markDirty(true, tid);
             _page_cache.put(pid, i);
-            LRU_update(pid);
+//            LRU_update(pid);
         }
         // some code goes here
         // not necessary for lab1
@@ -245,14 +398,14 @@ public class BufferPool {
         are removed from the cache so they can be reused safely
     */
     public synchronized void discardPage(PageId pid) {
-        if (!_page_cache.containsValue(pid)) return;
-        try {
-            flushPage(pid);
-        } catch (IOException e){
-            e.printStackTrace();
-        }
+//        if (!_page_cache.containsValue(pid)) return;
+//        try {
+//            flushPage(pid);
+//        } catch (IOException e){
+//            e.printStackTrace();
+//        }
         _page_cache.remove(pid);
-        LRU_update(pid);
+//        LRU_update(pid);
         // some code goes here
         // not necessary for lab1
     }
@@ -284,21 +437,31 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized  void evictPage() throws DbException {
-        int times = _capacity;
-        PageId evict_pageId = null;
-        for (PageId pageId : _LRU_cache.keySet()) {
-            if (_LRU_cache.get(pageId) <= times) {
-                times = _LRU_cache.get(pageId);
-                evict_pageId = pageId;
+//        int times = _capacity;
+//        PageId evict_pageId = null;
+//        for (PageId pageId : _LRU_cache.keySet()) {
+//            if (_LRU_cache.get(pageId) <= times) {
+//                times = _LRU_cache.get(pageId);
+//                evict_pageId = pageId;
+//            }
+//        }
+//        try {
+//            flushPage(evict_pageId);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        _page_cache.remove(evict_pageId);
+//        _LRU_cache.remove(evict_pageId);
+
+        for (Map.Entry<PageId, Page> i : _page_cache.entrySet()) {
+            PageId pid = i.getKey();
+            Page page = i.getValue();
+            if (page.isDirty() == null) {
+                discardPage(pid);
+                return;
             }
         }
-        try {
-            flushPage(evict_pageId);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        _page_cache.remove(evict_pageId);
-        _LRU_cache.remove(evict_pageId);
+        throw new DbException("shit");
         // some code goes here
         // not necessary for lab1
     }
