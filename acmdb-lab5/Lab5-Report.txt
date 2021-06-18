@@ -1,0 +1,18 @@
+Lab5-Report
+吴怀瑾 518030910414
+
+1.design decisions
+
+    In order to deal with lock acquire or release, I create a class named PageLock to store all the information about lock of a page. For deadlock detection, I created a dependency graph and use DFS to detect the deadlocks. For transaction complete, I just follow the document.
+
+2.API
+
+    no changes
+
+3.Incomplete elements
+
+    nothing.
+
+4.Others
+
+    spent 10 hours to do this course work. However, something strange happened in my computer. When I use the Idea IntelliJ to test the system test transactiontest, I can pass it with around 2-4 minutes, but the program won't stop when I use ant system test.

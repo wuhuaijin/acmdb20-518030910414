@@ -1,0 +1,18 @@
+Lab4-Report
+吴怀瑾 518030910414
+
+1.design decisions
+
+    I use histogram for selectivity estimation. I use an array buckets to record the height of the bar. No more change to StringHistogram. The optimizer is just following the document.
+
+2.API
+
+    no changes
+
+3.Incomplete elements
+
+    nothing.
+
+4.Others
+
+    spent 10 hours to do this course work. 
